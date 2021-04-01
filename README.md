@@ -162,3 +162,113 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   >>> os.environ['SECRET_KEY']
   'Top-Secret-Key'
   ```
+
+## Celery and RabbitMQ
+
+### Concepts
+
+- `Django (web server) -> RabbitMQ (message broker) -> Celery (worker processes)`  
+  A scheduled/event driven task which is handeled by django but django do not complete the task on it's own instead pass it on to RabbitMQ/Redis (message or event handler) which then completes the task/event as per availability or resources.
+
+### Commands
+
+- `pipenv install celery`  
+  To install celery
+
+- Setup RabbitMQ. Go to shell/terminal and make following commands.  
+  
+  ```bash
+  # install the pakage
+  sudo apt-get install rabbitmq-server
+  # enable the process
+  systemctl enable rabbitmq-server
+  # start processes
+  sudo systemctl start rabbitmq-server
+  # check the status of service
+  systemctl status rabbitmq-server
+  ```
+
+- Add a celery.py file along side with manage.py and add the following content in it.
+
+  ```python
+  import os
+
+  from celery import Celery
+
+  # set the default Django settings module for the 'celery' program.
+  os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Celery.settings')
+
+  app = Celery('Celery')
+
+  # Using a string here means the worker doesn't have to serialize
+  # the configuration object to child processes.
+  # - namespace='CELERY' means all celery-related configuration keys
+  #   should have a `CELERY_` prefix.
+  app.config_from_object('django.conf:settings', namespace='CELERY')
+
+  # Load task modules from all registered Django app configs.
+  app.autodiscover_tasks()
+
+
+  @app.task(bind=True)
+  def debug_task(self):
+      print(f'Request: {self.request!r}')
+  ```
+
+- Add this code in __init__.py file of project.
+
+  ```python
+  # Celery/__init__.py
+
+  # This will make sure the app is always imported when
+  # Django starts so that shared_task will use this app.
+  from .celery import app as celery_app
+
+  __all__ = ('celery_app',)
+  ```
+
+- `django-admin startapp App`  
+  Create a new app in project. (`App` here) also make a new file in it named `tasks.py` and put following code in it. Also add this app to projects settings.py
+
+  ```python
+  from celery import shared_task
+
+  @shared_task
+  def add(x,y):
+    return x+y
+  ```
+
+- `celery -A Celery worker -l INFO`  
+  Start celery worker process. Here `Celery` is project name and `celery` is project. For this to function properly rabbitmq server should be running. See the transport layer set to `amqp://guest:**@localhost:5672//`.
+
+  ```bash
+  -------------- celery@workstation v5.0.5 (singularity)
+  --- ***** ----- 
+  -- ******* ---- Linux-5.8.0-48-generic-x86_64-with-glibc2.29 2021-04-01 21:33:28
+  - *** --- * --- 
+  - ** ---------- [config]
+  - ** ---------- .> app:         Celery:0x7fc879d03610
+  - ** ---------- .> transport:   amqp://guest:**@localhost:5672//
+  - ** ---------- .> results:     disabled://
+  - *** --- * --- .> concurrency: 4 (prefork)
+  -- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+  --- ***** ----- 
+  -------------- [queues]
+  ```
+
+- Now go to another shell while the django server is running and open django shell and import the `tasks.py` module which we made in tha app.
+
+  ```python
+  >>> from App.tasks import add
+  >>> add.apply_async((1,2), countdown=5)
+  <AsyncResult: 2233792d-dd75-48e5-a8cc-7ad6f8e93964>
+  ```
+  
+  Go to the running django server and notice the output.  
+  
+  ```bash
+  Received task: App.tasks.add[2233792d-dd75-48e5-a8cc-7ad6f8e93964]  ETA:[2021-04-01 22:16:54.662311+00:00] 
+  Task App.tasks.add[2233792d-dd75-48e5-a8cc-7ad6f8e93964] succeeded in 0.0008293840000987984s: 3
+  ```
+
+  Notice the output of function in the end of last line.
