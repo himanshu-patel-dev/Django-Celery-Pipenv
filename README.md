@@ -117,6 +117,12 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 
 - If by mistake a package is install using `pip install <package>` then it's entry will not be made in Pipfile. Remove it using `pip uninstall <package>` then reinstall using pipenv. This will create entry of project in Pipfile and Piplock.
 
+- `pipenv --python 3.9`  
+  To update python version in virtual env.
+
+- `pipenv check`  
+  Python check
+
 ## Python Decouple: to store sensitive data in environment variables
 
 - `pipenv install python-decouple`  
@@ -133,11 +139,26 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
   ```
 
-- Put your secret in a `.env` file in projects root directory or along with settings.py file as `settings.ini` file.  
+- Put your secret in a `.env` file in projects root directory or along with settings.py file as `settings.ini` file. 
 
   ```yaml
   [settings]
   SECRET_KEY='Top-Secret-Key'
   DEBUG=True
   # commented
+  ```
+
+- If we have `pipenv` as tool to create virtual env the put `.env` file in projec's root folder or main folder of repo (along side .gitignore file). so that `pipenv` can identify the virtual env file and load those variables in environment. We can access those variables as.
+
+  ```bash
+  # enter python shell
+  pipenv run python
+  ```
+  
+  ```python
+  >>> import os
+  >>> os.environ['DEBUG']
+  'True'
+  >>> os.environ['SECRET_KEY']
+  'Top-Secret-Key'
   ```
