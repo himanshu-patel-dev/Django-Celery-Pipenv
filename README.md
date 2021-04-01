@@ -118,3 +118,26 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 - If by mistake a package is install using `pip install <package>` then it's entry will not be made in Pipfile. Remove it using `pip uninstall <package>` then reinstall using pipenv. This will create entry of project in Pipfile and Piplock.
 
 ## Python Decouple: to store sensitive data in environment variables
+
+- `pipenv install python-decouple`  
+  Install package
+
+- Inside settings.py  
+
+  ```python
+  from decouple import config
+
+  SECRET_KEY = config('SECRET_KEY')
+  DEBUG = config('DEBUG', default=False, cast=bool)
+  EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+  EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
+  ```
+
+- Put your secret in a `.env` file in projects root directory or along with settings.py file as `settings.ini` file.  
+
+  ```yaml
+  [settings]
+  SECRET_KEY='Top-Secret-Key'
+  DEBUG=True
+  # commented
+  ```
