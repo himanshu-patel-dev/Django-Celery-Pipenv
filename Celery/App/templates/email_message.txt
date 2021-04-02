@@ -1,0 +1,5 @@
+Hello {{name|safe}}
+
+Here is your activation code: {{name|safe}}@123
+
+Thank You!

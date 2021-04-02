@@ -272,3 +272,36 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   ```
 
   Notice the output of function in the end of last line.
+
+### Sending Emails using celery
+
+- `Client -> Django -> RabbitMQ -> Celery`
+
+  - Client (sends a request to django server)
+
+  - Django (receive client call and validates form)
+
+  - RabbitMQ (Handels the task of email sending given by django)
+
+  - Celery (receive task from rabbitmq and execute)
+
+- Make a form and a view.
+  
+  ```python
+  # forms.py
+  from django.http.response import HttpResponse
+  from django.shortcuts import render
+  from .forms import EmailVerificationForm
+  from django.views.generic.edit import FormView
+
+
+  class EmailVerificationFormView(FormView):
+    template_name = "email-verify.html"
+    form_class = EmailVerificationForm
+
+    def form_valid(self, form):
+      # call send email function of form
+      form.send_email()
+      msg = "Please Provide the OTP to activate email"
+      return HttpResponse(msg)
+  ```

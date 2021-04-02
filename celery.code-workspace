@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		// this make pylint do not show error while impoting local modules
+		"python.linting.pylintArgs": ["--load-plugins", "pylint_django"]
+	}
+}
