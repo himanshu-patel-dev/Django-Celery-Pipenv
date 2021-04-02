@@ -1,5 +1,9 @@
 # Django and Celery
 
+`After cloning this project replace .env.sample file (beside settings.py) with name .env and also replce required credential with valid ones`
+
+***
+
 ## Create Virtual env with Pipenv
 
 ### The Pipfile.lock
@@ -139,7 +143,7 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
   ```
 
-- Put your secret in a `.env` file in projects root directory or along with settings.py file as `settings.ini` file. 
+- Put your secret in a `.env` file in projects root directory or along with settings.py file as `settings.ini` file.
 
   ```yaml
   [settings]
@@ -167,7 +171,7 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 
 ### Concepts
 
-- `Django (web server) -> RabbitMQ (message broker) -> Celery (worker processes)`  
+- `Client (user send request) -> Django (web server) -> RabbitMQ (message broker) -> Celery (worker processes)`  
   A scheduled/event driven task which is handeled by django but django do not complete the task on it's own instead pass it on to RabbitMQ/Redis (message or event handler) which then completes the task/event as per availability or resources.
 
 ### Commands
@@ -188,44 +192,9 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   systemctl status rabbitmq-server
   ```
 
-- Add a celery.py file along side with manage.py and add the following content in it.
+- Add a [celery.py](Celery/Celery/celery.py) file along side with manage.py.
 
-  ```python
-  import os
-
-  from celery import Celery
-
-  # set the default Django settings module for the 'celery' program.
-  os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Celery.settings')
-
-  app = Celery('Celery')
-
-  # Using a string here means the worker doesn't have to serialize
-  # the configuration object to child processes.
-  # - namespace='CELERY' means all celery-related configuration keys
-  #   should have a `CELERY_` prefix.
-  app.config_from_object('django.conf:settings', namespace='CELERY')
-
-  # Load task modules from all registered Django app configs.
-  app.autodiscover_tasks()
-
-
-  @app.task(bind=True)
-  def debug_task(self):
-      print(f'Request: {self.request!r}')
-  ```
-
-- Add this code in __init__.py file of project.
-
-  ```python
-  # Celery/__init__.py
-
-  # This will make sure the app is always imported when
-  # Django starts so that shared_task will use this app.
-  from .celery import app as celery_app
-
-  __all__ = ('celery_app',)
-  ```
+- Setup [__init__.py](Celery/Celery/__init__.py) file of project to load celery at starup of server.
 
 - `django-admin startapp App`  
   Create a new app in project. (`App` here) also make a new file in it named `tasks.py` and put following code in it. Also add this app to projects settings.py
@@ -285,23 +254,24 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 
   - Celery (receive task from rabbitmq and execute)
 
-- Make a form and a view.
-  
+- [forms.py](Celery/App/forms.py) - Make a form which user will fill.
+
+- [views.py](Celery/App/views.py) - Make a view which server the request with this form and a confirmation of sent email.
+
+- [tasks.py](Celery/App/tasks.py) - Make a task to send email. Such tasks are handeled by RabbitMQ.
+
+- [email.py](Celery/App/email.py) - Make a module to send emails this also uses a [email_message.txt](Celery/App/templates/email_message.txt) (this file need to be in templates folder of app) file to produce email format
+
+- Don't forget to setup setting.py file with Email settings before sending email.  
+
   ```python
-  # forms.py
-  from django.http.response import HttpResponse
-  from django.shortcuts import render
-  from .forms import EmailVerificationForm
-  from django.views.generic.edit import FormView
-
-
-  class EmailVerificationFormView(FormView):
-    template_name = "email-verify.html"
-    form_class = EmailVerificationForm
-
-    def form_valid(self, form):
-      # call send email function of form
-      form.send_email()
-      msg = "Please Provide the OTP to activate email"
-      return HttpResponse(msg)
+  EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+  EMAIL_HOST = 'smtp.gmail.com'
+  EMAIL_PORT = 587
+  EMAIL_USE_TLS = True
+  EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+  EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+  DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
   ```
+
+- Now run the celery `celery -A Celery worker -l INFO` here make sure the rabbitMQ server is running and get connect to this shell on starting celery. Now start django server and go to `http://127.0.0.1:8000/verify/` and fill details and email will be delicered to your account. But this only deliver email to your account no validation is being done here.
