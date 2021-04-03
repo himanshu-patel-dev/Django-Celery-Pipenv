@@ -143,6 +143,9 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 # CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_TIMEZONE = 'Asia/Kolkata'
 
+# to use celery backend for transport layer instead of rabbitMQ
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+
 CELERY_BEAT_SCHEDULE = {
     "schedule_task": {
         "task": "App.tasks.send_email_task",

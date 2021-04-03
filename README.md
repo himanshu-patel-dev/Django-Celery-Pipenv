@@ -355,3 +355,10 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 
 - `python manage.py createcachetable --dry-run`  
   Make a dry run and then fire actual command to create cache table in django database
+
+- To make celery use redis on transport layer instead of rabbitMQ we need to include one line in settings.py and to againg use rabbitMQ comment this out.
+
+  ```python
+  # to use celery backend for transport layer instead of rabbitMQ
+  CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+  ```
