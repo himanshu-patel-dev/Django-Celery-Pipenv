@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # local apps
     'App',
     'django_celery_beat',
+    'django_celery_results'
 ]
 
 MIDDLEWARE = [
@@ -147,5 +148,20 @@ CELERY_BEAT_SCHEDULE = {
         "task": "App.tasks.send_email_task",
         "schedule": 5.0,
         "args": ("HP", config('DEFAULT_FROM_EMAIL')),
+    }
+}
+
+# django-celery-results settings for saving task execution history in django database 
+CELERY_RESULT_BACKEND = 'django-db'
+
+# celery cache - use default cache defined for django
+CELERY_CACHE_BACKEND = 'default'
+
+# define cache backend for django database
+CACHES = {
+    # define default cache with its backend and location (table name)
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cachedb'
     }
 }

@@ -10,6 +10,7 @@ celery = "*"
 redis = "*"
 flower = "*"
 django-celery-beat = "*"
+django-celery-results = "*"
 
 [dev-packages]
 

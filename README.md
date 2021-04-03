@@ -129,6 +129,8 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 - `pipenv check`  
   Python check
 
+***
+
 ## Python Decouple: to store sensitive data in environment variables
 
 - `pipenv install python-decouple`  
@@ -168,6 +170,8 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   >>> os.environ['SECRET_KEY']
   'Top-Secret-Key'
   ```
+
+***
 
 ## Celery and RabbitMQ
 
@@ -319,3 +323,35 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 
   6. `celery -A Celery beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler`  
     Celery uses database to know the schedules and then server them. To check this go to admin panel and create a `periodic task` with Interval Schedule of 5 sec.
+
+### Saving tasks data/results in djang database
+
+- `pipenv install django-celery-results`  
+  Install django-celery-results. This extension enables you to store Celery task results using the Django ORM. Put `django_celery_results` in INSTALLED_APPS. Perform migrations `python manage.py migrate`.
+
+- Add following code in settings.py and then run some celery managed task and see them get noticed in django database.
+
+  ```python
+  CELERY_RESULT_BACKEND = 'django-db'
+  ```
+
+### Define django cache and use it for celery
+
+- Add following settings for defining a default cache in django and use that default cache for celery.
+
+  ```python
+  # celery cache - use default cache defined for django
+  CELERY_CACHE_BACKEND = 'default'
+
+  # define cache backend for django database
+  CACHES = {
+      # define default cache with its backend and location (table name)
+      'default': {
+          'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+          'LOCATION': 'cachedb'
+      }
+  }
+  ```
+
+- `python manage.py createcachetable --dry-run`  
+  Make a dry run and then fire actual command to create cache table in django database
