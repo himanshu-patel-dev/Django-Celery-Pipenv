@@ -1,6 +1,8 @@
 # Django and Celery
 
-`After cloning this project replace .env.sample file (beside settings.py) with name .env and also replce required credential with valid ones`
+`After cloning this project replace .env.sample file (in root folder) with name .env and also replce required credential with valid ones`
+
+A big thanks to [Very Academy YouTube Channel](https://www.youtube.com/playlist?list=PLOLrQ9Pn6caz-6WpcBYxV84g9gwptoN20)
 
 ***
 
@@ -275,3 +277,45 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   ```
 
 - Now run the celery `celery -A Celery worker -l INFO` here make sure the rabbitMQ server is running and get connect to this shell on starting celery. Now start django server and go to `http://127.0.0.1:8000/verify/` and fill details and email will be delicered to your account. But this only deliver email to your account no validation is being done here.
+
+### Job or Task Scheduling
+
+- `pipenv install flower`  
+  To install flower. This gives a nice GUI interface to monitor progress of tasks and other details.
+
+- `flower -A Celery --port=5555`  
+  To start flower server. Here `Celery` is the project name. Run this command from directory of manage.py. Now go to `http://localhost:5555/` to see flower dashboard where details of each task is being kept.
+
+- `pipenv install django-celery-beat`  
+  Install `django_celery_beat` and register it in INSTALLED_APPS. This gives a nice models structure for purpose of cron jobs. Here we can create schedules to run using celery.
+
+- Use a manually schedules task by celery-beat. Schedule task of **send_email_task** with schedule of send email in every 5 sec. Also we provided positional arguments in **args** key.  
+
+  ```python
+  # settings.py
+  ...
+  CELERY_BEAT_SCHEDULE = {
+      "schedule_task": {
+          "task": "App.tasks.send_email_task",
+          "schedule": 5.0,
+          "args": ("HP", "hp123456@gmail.com"),
+      }
+  }
+  ...
+  ```
+
+- Now to check this we need few things.  
+  1. RabbitMQ / Redis serivce running as a message broker (check using systemctl)
+
+  2. `celery -A Celery worker -l INFO` Start celery worker and it should detect the message broker.
+
+  3. `flower -A Celery --port=5555` Start flower server. Also try visiting its dashboard. This should be the last instruction after server is up  
+    `: Connected to amqp://guest:**@127.0.0.1:5672//`
+
+  4. `python manage.py runserver` run the django server.  
+
+  5. `celery -A Celery beat -l INFO`  
+    Now run the celert beat to serve the task in queue. Celery uses periodically scheduled task config from `settings.py` file with this command.
+
+  6. `celery -A Celery beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler`  
+    Celery uses database to know the schedules and then server them. To check this go to admin panel and create a `periodic task` with Interval Schedule of 5 sec.

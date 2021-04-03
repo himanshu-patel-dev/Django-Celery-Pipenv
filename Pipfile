@@ -8,6 +8,8 @@ django = "*"
 python-decouple = "*"
 celery = "*"
 redis = "*"
+flower = "*"
+django-celery-beat = "*"
 
 [dev-packages]
 
