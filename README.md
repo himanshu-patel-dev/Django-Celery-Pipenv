@@ -198,9 +198,9 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
   systemctl status rabbitmq-server
   ```
 
-- Add a [celery.py](Celery/Celery/celery.py) file along side with manage.py.
+- Add a **[celery.py](src/Celery/celery.py)** file along side with manage.py.
 
-- Setup [__init__.py](Celery/Celery/__init__.py) file of project to load celery at starup of server.
+- Setup **[__init__.py](src/Celery/__init__.py)** file of project to load celery at starup of server.
 
 - `django-admin startapp App`  
   Create a new app in project. (`App` here) also make a new file in it named `tasks.py` and put following code in it. Also add this app to projects settings.py
@@ -355,6 +355,38 @@ If you run `pipenv install` it should automatically detect the `requirements.txt
 
 - `python manage.py createcachetable --dry-run`  
   Make a dry run and then fire actual command to create cache table in django database
+
+### Use Redis as backend instead of RabbitMQ
+
+- First chech if rabbitmq server is running  
+  
+  ```bash
+  sudo systemctl status rabbitmq-server
+  ```
+
+  if it shows **running** then stop the server using
+
+  ```bash
+  sudo systemctl stop rabbitmq-server
+  ```
+
+  recheck and see it should not be in **running** state this is just to make sure rabbitmq server can't serve us so redis is the only option. Also make sure reddis server is running. Two ways 
+
+  ```bash
+  sudo systemctl status redis-server
+  ```
+
+  it should be running (if redis is install and configured to be run on system startup using systemctl). If redis is install but process is not running then start it using.
+
+  ```bash
+  sudo systemctl start redis-server
+  ```
+
+  or simply for one time use if redis-server is in PATH, hit
+  
+  ```bash
+  redis-server
+  ```
 
 - To make celery use redis on transport layer instead of rabbitMQ we need to include one line in settings.py and to againg use rabbitMQ comment this out.
 
