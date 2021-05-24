@@ -1,4 +1,4 @@
-# Django and Celery
+# Django and Celery and Pipenv
 
 `After cloning this project replace .env.sample file (in root folder) with name .env and also replce required credential with valid ones`
 
